@@ -1,0 +1,53 @@
+/*font*/
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* monkeytype inspired palette */
+  --bg-color: #323437;
+  --text-muted: #64666d;
+  --text-correct: #d1d0c5;
+  --text-incorrect: #ca4754;
+  --text-current: #e2b714;
+
+  --font-mono: 'Roboto Mono', monospace;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  margin: 0;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.typing-container {
+  font-size: 2.2rem;
+  line-height: 1.4;
+  width: 85%;
+  max-width: 1000px;
+  position: relative;
+}
+
+.word{
+  margin-right: 0.75rem;
+  display: inline-block;
+}
+
+.letter {
+  position:relative;
+  transition: color 0.05s ease;
+}
+
+.text-muted { color: var(--text-muted); }
+.text-correct { color: var(--text-correct);}
+.text-incorrect { color: var(--text-incorrect); text-decoration: underline; }
+.text-current { color: var(--text-current); }
