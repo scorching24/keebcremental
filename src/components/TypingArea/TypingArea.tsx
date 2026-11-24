@@ -1,12 +1,24 @@
 import { useTypingStore } from '../../store/useTypingStore';
 
 export function TypingArea() {
-    const { words, currentWordIndex, currentLetterIndex, typedChars } = useTypingStore();
+    const { words, currentWordIndex, currentLetterIndex, typedChars, skippedWords } = useTypingStore();
 
     const getLetterClass = (wordIndex: number, letterIndex: number, letter: string) => {
         // if the word has been completed already
         if (wordIndex < currentWordIndex) {
-           return 'letter text-correct'; 
+           const skipped = skippedWords.find((entry) => entry.wordIndex === wordIndex);
+
+           if (!skipped) {
+                return 'letter text-correct';
+           }
+
+           if (letterIndex < skipped.typed.length) {
+            return skipped.typed[letterIndex].toLowerCase() === letter.toLowerCase()
+                ? 'letter text-correct'
+                : 'letter text-incorrect';
+           }
+
+           return 'letter text-incorrect';
         }
 
         // if word is still being typed
