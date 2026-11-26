@@ -16,11 +16,15 @@ interface TypingState {
     skippedWords: Array<{ wordIndex: number; typed: string[] }>;
     streak: number;
     bestStreak: number;
+    endTime: number | null;
+    testComplete:boolean;
+    switches: number;
+    runSwitches: number;
 
     setWords: (words: string[]) => void;
     typeChar: (key: string) => void;
     nextWord: () => void;
-    reset: () => void;
+    restart: () => void;
 }
 
 const WORD_COUNT = 30;
@@ -38,15 +42,21 @@ function createInitialState() {
         skippedWords: [],
         streak: 0,
         bestStreak: 0,
+        switches: 0,
+        endTime: null,
+        testComplete: false,
+        runSwitches: 0,
     };
 }
 
 export const useTypingStore = create<TypingState>((set) => ({
     ...createInitialState(),
     setWords: (words) => set({ words }),
-    reset: () => set(createInitialState()),
+    restart: () => set(createInitialState()),
 
     typeChar: (key) => set((state) => {
+        if (state.testComplete) return state;
+
         const word = state.words[state.currentWordIndex] ?? '';
         const expected = word[state.currentLetterIndex];
 
@@ -67,6 +77,8 @@ export const useTypingStore = create<TypingState>((set) => ({
     }),
 
     nextWord: () => set((state) => {
+        if (state.testComplete) return state;
+
         const word = state.words[state.currentWordIndex] ?? '';
         const typed = state.typedChars;
 
@@ -86,8 +98,10 @@ export const useTypingStore = create<TypingState>((set) => ({
             : state.skippedWords,
             totalKeystrokes: state.totalKeystrokes + missedLetters,
             completedWords : state.completedWords + (finishedCorrectly ? 1 : 0),
+            switches: state.switches + (finishedCorrectly ? 1 : 0),
             streak: nextStreak,
-            bestStreak: Math.max(state.bestStreak, nextStreak),
+            bestStreak: Math.max(state.bestStreak, nextStreak), 
+            runSwitches: state.runSwitches + (finishedCorrectly ? 1 : 0),
         };
 
         const nextIndex = state.currentWordIndex + 1;
@@ -95,11 +109,8 @@ export const useTypingStore = create<TypingState>((set) => ({
         if (nextIndex >= state.words.length) {
             return {
                 ...shared,
-                words: generateWords(WORD_COUNT),
-                currentWordIndex: 0,
-                currentLetterIndex: 0,
-                typedChars: [],
-                skippedWords: [],
+                testComplete: true,
+                endTime: Date.now(),
             };
         }
 
