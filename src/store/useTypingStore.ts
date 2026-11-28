@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { generateWords } from '../utils/wordGenerator';
+import {UPGRADES} from '../utils/upgrades';
+import {getUpgradeCost, getWordPayout} from '../utils/economy';
 
 interface TypingState {
     words: string[];
@@ -20,6 +22,12 @@ interface TypingState {
     testComplete:boolean;
     switches: number;
     runSwitches: number;
+
+    purchasedUpgrades: Record<string, boolean>;
+    treeOpen: boolean;
+
+    toggleTree: () => void;
+    buyUpgrade: (id: string) => void;
 
     setWords: (words: string[]) => void;
     typeChar: (key: string) => void;
@@ -46,13 +54,45 @@ function createInitialState() {
         endTime: null,
         testComplete: false,
         runSwitches: 0,
+        purchasedUpgrades: {},
+        treeOpen: false,
     };
 }
 
 export const useTypingStore = create<TypingState>((set) => ({
     ...createInitialState(),
+
     setWords: (words) => set({ words }),
-    restart: () => set(createInitialState()),
+
+    toggleTree: () => set((state) => ({treeOpen: !state.treeOpen })),
+
+    buyUpgrade: (id) => set((state) => {
+        const node = UPGRADES.find((item) => item.id === id);
+        if (!node || state.purchasedUpgrades[id]) return state;
+
+        const requirementsMet = node.requires.every(
+            (requiredId) => state.purchasedUpgrades[requiredId] === true
+        );
+        if (!requirementsMet) return state;
+
+        const cost = getUpgradeCost(node);
+        if (state.switches < cost) return state;
+
+        return {
+            switches: state.switches - cost,
+            purchasedUpgrades: {
+                ...state.purchasedUpgrades,
+                [id]: true,
+            },
+        };
+    }),
+
+    restart: () => set((state) => ({
+        ...createInitialState(),
+        switches: state.switches,
+        bestStreak: state.bestStreak,
+        purchasedUpgrades: state.purchasedUpgrades,
+    })),
 
     typeChar: (key) => set((state) => {
         if (state.testComplete) return state;
@@ -92,16 +132,22 @@ export const useTypingStore = create<TypingState>((set) => ({
         const missedLetters = skipped ? Math.max(word.length - typed.length, 0) : 0;
         const nextStreak = finishedCorrectly ? state.streak + 1 : 0;
 
+        const payout = getWordPayout(
+            finishedCorrectly,
+            state.streak,
+            state.purchasedUpgrades
+        );
+
         const shared = {
             skippedWords: skipped
             ? [...state.skippedWords, { wordIndex: state.currentWordIndex, typed: [...typed] }]
             : state.skippedWords,
             totalKeystrokes: state.totalKeystrokes + missedLetters,
             completedWords : state.completedWords + (finishedCorrectly ? 1 : 0),
-            switches: state.switches + (finishedCorrectly ? 1 : 0),
+            switches: state.switches + payout,
             streak: nextStreak,
             bestStreak: Math.max(state.bestStreak, nextStreak), 
-            runSwitches: state.runSwitches + (finishedCorrectly ? 1 : 0),
+            runSwitches: state.runSwitches + payout,
         };
 
         const nextIndex = state.currentWordIndex + 1;

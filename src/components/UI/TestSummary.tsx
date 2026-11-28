@@ -9,6 +9,7 @@ export function TestSummary() {
     const completedWords = useTypingStore((state) => state.completedWords);
     const bestStreak = useTypingStore((state) => state.bestStreak);
     const runSwitches = useTypingStore((state) => state.runSwitches);
+    const toggleTree = useTypingStore((state) => state.toggleTree);
     const restart = useTypingStore((state) => state.restart);
 
     if (!testComplete) return null;
@@ -57,7 +58,7 @@ export function TestSummary() {
                 </div>
 
                 <div className='run-actions'>
-                    <button className='run-button run-button-secondary' type='button'>
+                    <button className='run-bottom run-button-primary' type='button' onClick={toggleTree}>
                         open keebtree
                     </button>
                     <button className='run-bottom run-button-primary' type='button' onClick={restart}>
